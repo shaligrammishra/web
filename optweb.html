@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ne">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>धुलिखेल सामुदायिक पुस्तकालय</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <!-- Google Fonts for Nepali Text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Mukta', sans-serif;
+            scroll-behavior: smooth;
+            background: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* ===== LOADING SCREEN ===== */
+        #loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: linear-gradient(135deg, #1e3a5f, #0f2847);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        #loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top: 5px solid #fbbf24;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loader-text {
+            margin-top: 24px;
+            color: #fff;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            animation: pulseText 1.6s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes pulseText {
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* ===== SKELETON ===== */
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.6s ease-in-out infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .skeleton-text {
+            height: 16px;
+            border-radius: 6px;
+        }
+        .skeleton-text-lg {
+            height: 28px;
+        }
+        .skeleton-text-xl {
+            height: 40px;
+        }
+        .skeleton-rect {
+            border-radius: 12px;
+        }
+        .skeleton-circle {
+            border-radius: 50%;
+        }
+
+        /* ===== SCROLL REVEAL ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.92);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal-scale.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* ===== GLASSMORPHISM ===== */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .glass-dark {
+            background: rgba(30, 58, 95, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3a5f, #2a5298);
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 4px 20px rgba(30, 58, 95, 0.3);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            border-radius: 50px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 35px rgba(30, 58, 95, 0.4);
+        }
+        .btn-primary:hover::after {
+            opacity: 0.15;
+        }
+        .btn-primary:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .btn-outline {
+            display: inline-block;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: 2px solid #1e3a5f;
+            color: #1e3a5f;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.35s ease;
+            text-decoration: none;
+        }
+        .btn-outline:hover {
+            background: #1e3a5f;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(30, 58, 95, 0.25);
+        }
+
+        /* ===== NAV ===== */
+        .nav-link {
+            position: relative;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2.5px;
+            background: #fbbf24;
+            transition: width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-radius: 4px;
+        }
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        .nav-link:hover {
+            color: #fbbf24;
+        }
+
+        /* ===== OBJECTIVE CARDS ===== */
+        .obj-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(30, 58, 95, 0.06);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: default;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .obj-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 16px 48px rgba(30, 58, 95, 0.10);
+            border-color: rgba(30, 58, 95, 0.15);
+        }
+        .obj-icon {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #eef2ff, #dbeafe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e3a5f;
+            font-size: 1.3rem;
+            transition: all 0.4s ease;
+        }
+        .obj-card:hover .obj-icon {
+            background: linear-gradient(135deg, #1e3a5f, #2a5298);
+            color: #fbbf24;
+            transform: scale(1.05) rotate(-3deg);
+        }
+
+        /* ===== FOUNDER CARD ===== */
+        .founder-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 24px;
+            padding: 40px 44px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .founder-card::before {
+            content: '\201C';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            font-size: 8rem;
+            color: rgba(251, 191, 36, 0.12);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+        .founder-card:hover {
+            border-color: rgba(251, 191, 36, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(1.005);
+        }
+
+        /* ===== FLOATING DECORATIONS ===== */
+        .float-element {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(251, 191, 36, 0.06);
+            pointer-events: none;
+            animation: float 8s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-24px) rotate(6deg);
+            }
+        }
+
+        /* ===== HERO TEXT ANIMATION ===== */
+        .hero-title {
+            background: linear-gradient(135deg, #0f2847 0%, #1e3a5f 40%, #2a5298 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== RESPONSIVE TWEAKS ===== */
+        @media (max-width: 768px) {
+            .founder-card {
+                padding: 28px 20px;
+            }
+            .hero-title {
+                font-size: 2.2rem !important;
+            }
+            .obj-card {
+                padding: 16px 18px;
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e3a5f;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2a5298;
+        }
+
+        /* ===== SECTION CONTAINERS ===== */
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .section-pad {
+            padding: 72px 0;
+        }
+
+        @media (max-width: 640px) {
+            .section-pad {
+                padding: 48px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== LOADING SCREEN ===== -->
+    <div id="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">खुल्दै छ ...</div>
+    </div>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass shadow-lg transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="#" class="text-2xl font-extrabold tracking-wide text-blue-900 flex items-center gap-2">
+                <i class="fas fa-book-open text-yellow-500 text-2xl"></i>
+                <span class="hidden sm:inline">सामुदायिक पुस्तकालय</span>
+                <span class="sm:hidden">पुस्तकालय</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-8 text-base font-medium text-blue-900">
+                <a href="#home" class="nav-link active">गृहपृष्ठ</a>
+                <a href="#about" class="nav-link">परिचय</a>
+                <a href="#objectives" class="nav-link">उद्देश्यहरू</a>
+                <a href="#founder" class="nav-link">संस्थापक</a>
+            </div>
+            <!-- Mobile toggle -->
+            <button id="menuToggle" class="md:hidden text-blue-900 text-2xl focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="md:hidden hidden bg-white/95 backdrop-blur-md border-t border-gray-100 px-4 py-3 space-y-2 text-base font-medium text-blue-900">
+            <a href="#home" class="block py-2 hover:text-yellow-600 transition">गृहपृष्ठ</a>
+            <a href="#about" class="block py-2 hover:text-yellow-600 transition">परिचय</a>
+            <a href="#objectives" class="block py-2 hover:text-yellow-600 transition">उद्देश्यहरू</a>
+            <a href="#founder" class="block py-2 hover:text-yellow-600 transition">संस्थापक</a>
+        </div>
+    </nav>
+
+    <!-- ============================================================ -->
+    <!-- ===== HERO SECTION ===== -->
+    <!-- ============================================================ -->
+    <section id="home" class="section-pad pt-28 relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50/40">
+        <!-- Floating decorations -->
+        <div class="float-element w-72 h-72 top-10 -left-20"></div>
+        <div class="float-element w-48 h-48 bottom-10 -right-10" style="animation-delay:3s;"></div>
+        <div class="float-element w-32 h-32 top-1/2 left-1/2 -translate-x-1/2" style="animation-delay:5s; background:rgba(30,58,95,0.04);"></div>
+
+        <div class="section-container relative">
+            <div class="flex flex-col lg:flex-row items-center gap-12">
+
+                <!-- Text -->
+                <div class="lg:w-1/2 space-y-6 reveal-left">
+                    <div class="inline-flex items-center gap-2 bg-blue-100/70 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold backdrop-blur-sm border border-blue-200/50">
+                        <i class="fas fa-flag text-yellow-500"></i>
+                        स्थापना: २०८३ बैशाख
+                    </div>
+                    <h1 class="hero-title text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
+                        सबैको लागि खुला <br class="hidden sm:block">
+                        <span class="text-yellow-500 bg-clip-text">ज्ञानको घर</span>
+                    </h1>
+                    <h2 class="text-2xl md:text-3xl font-semibold text-gray-700">धुलिखेल सामुदायिक पुस्तकालय</h2>
+                    <p class="text-lg text-gray-600 max-w-lg leading-relaxed">
+                        <i class="fas fa-map-pin text-yellow-500 mr-2"></i>
+                        धुलिखेल-४, बखुण्डोल, बुद्धपार्कमा अवस्थित एक समुदाय केन्द्रित अध्ययन तथा सिकाइ स्थल।
+                    </p>
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <a href="#about" class="btn-primary">
+                            <i class="fas fa-arrow-right mr-2"></i>थप जानकारी
+                        </a>
+                        <a href="#objectives" class="btn-outline">
+                            <i class="fas fa-bullseye mr-2"></i>उद्देश्य
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Image -->
+                <div class="lg:w-1/2 reveal-right">
+                    <div class="relative">
+                        <div class="absolute -inset-4 bg-gradient-to-tr from-yellow-400/20 to-blue-400/20 rounded-3xl blur-2xl"></div>
+                        <img src="image1.jpeg" alt="Library Banner"
+                        class="relative w-full rounded-2xl shadow-2xl border-4 border-white/80 object-cover"
+                        style="aspect-ratio:4/3;"
+                        onerror="this.src='https://placehold.co/800x600/1e3a5f/ffffff?text=पुस्तकालय+ब्यानर'">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ===== ABOUT SECTION ===== -->
+    <!-- ============================================================ -->
+    <section id="about" class="section-pad bg-white relative overflow-hidden">
+        <div class="section-container">
+            <div class="flex flex-col lg:flex-row-reverse items-center gap-12">
+
+                <!-- Image -->
+                <div class="lg:w-1/2 reveal-right">
+                    <div class="relative">
+                        <div class="absolute -inset-4 bg-gradient-to-tl from-blue-400/20 to-yellow-400/20 rounded-3xl blur-2xl"></div>
+                        <img src="image2.jpeg" alt="Library Building"
+                        class="relative w-full rounded-2xl shadow-2xl border-4 border-white/80 object-cover"
+                        style="aspect-ratio:4/3;"
+                        onerror="this.src='https://placehold.co/800x600/0f2847/ffffff?text=पुस्तकालय+भवन'">
+                    </div>
+                </div>
+
+                <!-- Text -->
+                <div class="lg:w-1/2 space-y-5 reveal-left">
+                    <div class="inline-flex items-center gap-2 bg-yellow-100/70 text-yellow-800 px-4 py-1.5 rounded-full text-sm font-semibold">
+                        <i class="fas fa-info-circle"></i>
+                        परिचय
+                    </div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-blue-900 leading-tight">
+                        परिचय तथा <br class="hidden sm:block">
+                        <span class="text-yellow-500">पृष्ठभूमि</span>
+                    </h2>
+                    <div class="w-16 h-1.5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
+
+                    <p class="text-gray-700 leading-relaxed text-justify">
+                        धुलिखेल सामुदायिक पुस्तकालय धुलिखेलमा अवस्थित एक समुदाय केन्द्रित अध्ययन तथा सिकाइ स्थल हो, जसको
+                        स्थापना शिक्षा प्रवर्द्धन, ज्ञान आदान–प्रदान तथा स्थानीय समुदायमा बलियो पठन संस्कृतिको विकास गर्ने
+                        उद्देश्यले गरिएको छ। वडा नं. ४ स्थित बुद्ध पार्क नजिक रहेको यस पुस्तकालयले विद्यार्थी, युवा तथा
+                        समुदायका सदस्यहरूलाई विभिन्न पुस्तक तथा शैक्षिक स्रोतहरूमा पहुँच उपलब्ध गराउँदै आएको छ।
+                    </p>
+                    <p class="text-gray-700 leading-relaxed text-justify">
+                        समुदाय पुस्तकालयहरू शिक्षा, साक्षरता तथा आजीवन सिकाइ प्रवर्द्धन गर्ने महत्वपूर्ण संस्थाका रूपमा लामो
+                        समयदेखि परिचित छन्। धुलिखेल तथा आसपासका क्षेत्रमा पुस्तक, सूचना तथा शैक्षिक सामग्रीहरू सहज रूपमा
+                        उपलब्ध हुने शान्त र सहयोगी अध्ययन स्थलको आवश्यकता बढ्दो रूपमा महसुस गरिएको छ।
+                    </p>
+                    <div class="flex items-center gap-4 pt-2">
+                        <span class="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-full">
+                            <i class="fas fa-book text-yellow-500"></i> ५००+ पुस्तक
+                        </span>
+                        <span class="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-full">
+                            <i class="fas fa-users text-yellow-500"></i> २००+ सदस्य
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ===== OBJECTIVES SECTION ===== -->
+    <!-- ============================================================ -->
+    <section id="objectives" class="section-pad bg-gradient-to-br from-gray-50 to-blue-50/40 relative">
+        <div class="section-container">
+            <div class="text-center max-w-2xl mx-auto mb-12 reveal">
+                <div class="inline-flex items-center gap-2 bg-blue-100/70 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
+                    <i class="fas fa-bullseye text-yellow-500"></i>
+                    हाम्रा लक्ष्य
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold text-blue-900">
+                    प्रमुख <span class="text-yellow-500">उद्देश्यहरू</span>
+                </h2>
+                <div class="w-16 h-1.5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full mx-auto mt-3"></div>
+                <p class="text-gray-600 mt-4 text-lg">हामी यी माध्यमबाट समुदायको शैक्षिक विकासमा योगदान गर्न चाहन्छौं।</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Card 1 -->
+                <div class="obj-card reveal" style="transition-delay:0.05s;">
+                    <div class="obj-icon"><i class="fas fa-book-open"></i></div>
+                    <p class="text-gray-800 text-lg font-medium">बालबालिका, युवा तथा वयस्कहरूमा पठन संस्कृतिको विकास गर्नु।</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="obj-card reveal" style="transition-delay:0.10s;">
+                    <div class="obj-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                    <p class="text-gray-800 text-lg font-medium">पुस्तक तथा शैक्षिक सामग्रीहरूमा निःशुल्क वा सहज पहुँच उपलब्ध गराउनु।</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="obj-card reveal" style="transition-delay:0.15s;">
+                    <div class="obj-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <p class="text-gray-800 text-lg font-medium">विद्यार्थीहरूलाई अध्ययन तथा परीक्षाको तयारीमा सहयोग पुर्‍याउनु।</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="obj-card reveal" style="transition-delay:0.20s;">
+                    <div class="obj-icon"><i class="fas fa-leaf"></i></div>
+                    <p class="text-gray-800 text-lg font-medium">अध्ययन तथा सिकाइका लागि शान्त र शैक्षिक वातावरण सिर्जना गर्नु।</p>
+                </div>
+                <!-- Card 5 -->
+                <div class="obj-card reveal" style="transition-delay:0.25s;">
+                    <div class="obj-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <p class="text-gray-800 text-lg font-medium">शैक्षिक, साहित्यिक तथा सांस्कृतिक कार्यक्रमहरू सञ्चालन गर्नु।</p>
+                </div>
+                <!-- Card 6 -->
+                <div class="obj-card reveal" style="transition-delay:0.30s;">
+                    <div class="obj-icon"><i class="fas fa-landmark"></i></div>
+                    <p class="text-gray-800 text-lg font-medium">स्थानीय ज्ञान, संस्कृति तथा इतिहासको संरक्षण र प्रवर्द्धन गर्नु।</p>
+                </div>
+                <!-- Card 7 (full width) -->
+                <div class="obj-card md:col-span-2 reveal" style="transition-delay:0.35s;">
+                    <div class="obj-icon"><i class="fas fa-hands-helping"></i></div>
+                    <p class="text-gray-800 text-lg font-medium">शैक्षिक विकासमा समुदायको सहभागिता अभिवृद्धि गर्नु।</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ===== FOUNDER SECTION ===== -->
+    <!-- ============================================================ -->
+    <section id="founder" class="section-pad relative overflow-hidden" style="background:linear-gradient(135deg, #0f2847 0%, #1a3a5f 40%, #1e4a7a 100%);">
+        <!-- Decorative circles -->
+        <div class="float-element w-80 h-80 top-0 -right-20" style="background:rgba(251,191,36,0.05); animation-duration:10s;"></div>
+        <div class="float-element w-56 h-56 bottom-0 -left-20" style="background:rgba(251,191,36,0.04); animation-duration:12s; animation-delay:2s;"></div>
+
+        <div class="section-container relative">
+            <div class="text-center max-w-3xl mx-auto mb-10 reveal">
+                <div class="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-300 px-4 py-1.5 rounded-full text-sm font-semibold backdrop-blur-sm border border-yellow-400/20">
+                    <i class="fas fa-quote-left"></i>
+                    संस्थापकको भनाइ
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mt-4">
+                    संस्थापकको <span class="text-yellow-400">सन्देश</span>
+                </h2>
+                <div class="w-16 h-1.5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full mx-auto mt-3"></div>
+            </div>
+
+            <div class="max-w-4xl mx-auto reveal-scale">
+                <div class="founder-card text-white">
+                    <p class="text-lg md:text-xl leading-relaxed italic mb-8 relative z-10">
+                        "धुलिखेल–४ मा सामुदायिक पुस्तकालय स्थापना गर्ने मुख्य विचार भनेको समुदायमा शिक्षा, ज्ञान तथा पठन
+                        संस्कृतिको विकास गर्नु हो। विद्यार्थी, युवा तथा स्थानीय बासिन्दाहरूलाई सहज रूपमा पुस्तक, अध्ययन
+                        सामग्री र शैक्षिक स्रोतहरू उपलब्ध गराई अध्ययन तथा आत्मविकासका लागि अनुकूल वातावरण सिर्जना गर्नु यस
+                        अभियानको प्रमुख उद्देश्य हो। साथै, पुस्तकालयलाई केवल पुस्तक पढ्ने स्थानमा सीमित नराखी समुदायका लागि
+                        ज्ञान आदान–प्रदान, सीप विकास, शैक्षिक तथा सांस्कृतिक गतिविधि सञ्चालन गर्ने साझा केन्द्रका रूपमा
+                        विकास गर्ने सोच राखिएको छ।"
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 border-t border-white/10 pt-6">
+                        <div class="flex-shrink-0">
+                            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-2xl font-bold text-blue-900 shadow-lg">
+                                श्री
+                            </div>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <div class="font-extrabold text-2xl text-yellow-400">श्रीराम थापा</div>
+                            <div class="text-sm text-gray-300 flex items-center justify-center sm:justify-start gap-2">
+                                <i class="fas fa-user-tie"></i>
+                                संस्थापक अध्यक्ष
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ===== FOOTER ===== -->
+    <!-- ============================================================ -->
+    <footer class="bg-gray-900 text-gray-300 pt-14 pb-8">
+        <div class="section-container">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-gray-800">
+
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-book-open text-yellow-500"></i>
+                        धुलिखेल सामुदायिक पुस्तकालय
+                    </h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><i class="fas fa-map-marker-alt text-yellow-500 w-5"></i> धुलिखेल-४, बखुण्डोल, बुद्धपार्क</li>
+                        <li><i class="fas fa-calendar-check text-yellow-500 w-5"></i> स्थापना: २०८३ बैशाख</li>
+                        <li><i class="fas fa-clock text-yellow-500 w-5"></i> खुल्ने समय: बिहान ८ – साँझ ६</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-link text-yellow-500"></i>
+                        द्रुत लिङ्कहरू
+                    </h3>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="#home" class="hover:text-yellow-400 transition flex items-center gap-2"><i class="fas fa-chevron-right text-yellow-500 text-xs"></i> गृहपृष्ठ</a></li>
+                        <li><a href="#about" class="hover:text-yellow-400 transition flex items-center gap-2"><i class="fas fa-chevron-right text-yellow-500 text-xs"></i> परिचय</a></li>
+                        <li><a href="#objectives" class="hover:text-yellow-400 transition flex items-center gap-2"><i class="fas fa-chevron-right text-yellow-500 text-xs"></i> उद्देश्यहरू</a></li>
+                        <li><a href="#founder" class="hover:text-yellow-400 transition flex items-center gap-2"><i class="fas fa-chevron-right text-yellow-500 text-xs"></i> संस्थापक</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-handshake text-yellow-500"></i>
+                        सहयोगी संस्थाहरू
+                    </h3>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-yellow-500 mt-0.5"></i> लालीगुराँस टोल सुधार समिति</li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-yellow-500 mt-0.5"></i> धुलिखेल नगरपालिका-४, बखुण्डोल</li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check-circle text-yellow-500 mt-0.5"></i> सामाजिक विकास मन्त्रालय, बागमती प्रदेश</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="text-center text-gray-500 text-sm pt-8 flex flex-col sm:flex-row items-center justify-center gap-2">
+                <span>&copy; २०२६ धुलिखेल सामुदायिक पुस्तकालय.</span>
+                <span>सर्वाधिकार सुरक्षित.</span>
+                <span class="hidden sm:inline">|</span>
+                <span class="flex items-center gap-1">
+                    <i class="fas fa-code text-yellow-500/50"></i>
+                    शान्त अध्ययनको लागि
+                </span>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- ============================================================ -->
+    <!-- ===== JAVASCRIPT ===== -->
+    <!-- ============================================================ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // ----- LOADER -----
+            const loader = document.getElementById('loader');
+            // Hide loader after 1.8s with a smooth fade
+            setTimeout(() => {
+                loader.classList.add('hidden');
+            }, 1800);
+
+            // ----- MOBILE MENU -----
+            const toggle = document.getElementById('menuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            toggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                const icon = toggle.querySelector('i');
+                if (mobileMenu.classList.contains('hidden')) {
+                    icon.className = 'fas fa-bars';
+                } else {
+                    icon.className = 'fas fa-times';
+                }
+            });
+
+            // Close mobile menu on link click
+            document.querySelectorAll('#mobileMenu a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    toggle.querySelector('i').className = 'fas fa-bars';
+                });
+            });
+
+            // ----- NAV ACTIVE LINK (scroll spy) -----
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section[id]');
+
+            function updateActiveLink() {
+                let current = '';
+                const scrollY = window.scrollY + 120;
+                sections.forEach(sec => {
+                    const top = sec.offsetTop;
+                    const height = sec.offsetHeight;
+                    if (scrollY >= top && scrollY < top + height) {
+                        current = sec.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink();
+
+            // ----- SCROLL REVEAL (Intersection Observer) -----
+            const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Add a small staggered delay if there's a transition-delay already set via inline style
+                        const delay = parseFloat(entry.target.style.transitionDelay) || 0;
+                        setTimeout(() => {
+                            entry.target.classList.add('visible');
+                        }, delay * 1000);
+                        // Optionally unobserve after reveal
+                        // observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.12,
+                rootMargin: '0px 0px -40px 0px'
+            });
+
+            revealEls.forEach(el => observer.observe(el));
+
+            // ----- NAVBAR SHADOW ON SCROLL -----
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 30) {
+                    navbar.classList.add('shadow-xl');
+                    navbar.classList.remove('shadow-lg');
+                } else {
+                    navbar.classList.remove('shadow-xl');
+                    navbar.classList.add('shadow-lg');
+                }
+            });
+
+            // ----- SMOOTH SCROLL for anchor links (optional enhancement) -----
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    const targetEl = document.querySelector(targetId);
+                    if (targetEl) {
+                        e.preventDefault();
+                        const offsetTop = targetEl.offsetTop - 70;
+                        window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+                    }
+                });
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>
